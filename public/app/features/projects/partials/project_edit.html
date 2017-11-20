@@ -7,9 +7,6 @@
     <h1 ng-hide="ctrl.isNew">Edit data source</h1>
 
   </div>
-  <!--ng-if="$eval(formTemp[0].condition ? formTemp[0].condition : 'true' )"-->
-  <!--<form sf-schema="ctrl.schema" sf-form="ctrl.forms" sf-model="ctrl.model" class="gf-form-group"></form>-->
-
   <wizard on-finish="finishedWizard()" on-cancel="cancelledWizard()" indicators-position="top">
     <wz-step wz-title="{{formTemp[0].sectionGroup || formTemp[0].title}}"  ng-repeat="formTemp in ctrl.forms track by $index"
              wz-disabled="{{(formTemp[0].condition ? !$eval(formTemp[0].condition) : false)}}">
