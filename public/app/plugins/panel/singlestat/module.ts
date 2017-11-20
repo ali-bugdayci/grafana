@@ -17,6 +17,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   dataType = 'timeseries';
   series: any[];
   data: any;
+  dataOther: any;
   fontSizes: any[];
   unitFormats: any[];
   invalidGaugeRange: boolean;
@@ -70,6 +71,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       thresholdMarkers: true,
       thresholdLabels: false
     },
+    doubleValuePercentage : false,
     tableColumn: ''
   };
 
@@ -102,6 +104,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
   onDataReceived(dataList) {
     const data: any = {};
+    const dataOther: any = {};
     if (dataList.length > 0 && dataList[0].type === 'table'){
       this.dataType = 'table';
       const tableData = dataList.map(this.tableHandler.bind(this));
@@ -109,9 +112,10 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     } else {
       this.dataType = 'timeseries';
       this.series = dataList.map(this.seriesHandler.bind(this));
-      this.setValues(data);
+      this.setValues(data, dataOther);
     }
     this.data = data;
+    this.dataOther = dataOther;
     this.render();
   }
 
@@ -245,15 +249,42 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     return result;
   }
 
-  setValues(data) {
+  setValues(data, dataOther) {
     data.flotpairs = [];
 
     if (this.series.length > 1) {
-      var error: any = new Error();
-      error.message = 'Multiple Series Error';
-      error.data = 'Metric query returns ' + this.series.length +
-        ' series. Single Stat Panel expects a single series.\n\nResponse:\n'+JSON.stringify(this.series);
-      throw error;
+      if (this.series.length === 2){
+        var otherPoint = _.first(this.series[1].datapoints);
+        var otherValue = _.isArray(otherPoint) ? otherPoint[0] : null;
+
+        if (this.panel.valueName === 'name') {
+          dataOther.value = 0;
+          dataOther.valueRounded = 0;
+          dataOther.valueFormatted = this.series[1].alias;
+        } else if (_.isString(otherValue)) {
+          dataOther.value = 0;
+          dataOther.valueFormatted = _.escape(otherValue);
+          dataOther.valueRounded = 0;
+        } else {
+          dataOther.value = this.series[1].stats[this.panel.valueName];
+          dataOther.flotpairs = this.series[1].flotpairs;
+
+          var decimalInfo2 = this.getDecimalsForValue(dataOther.value);
+          var formatFunc2 = kbn.valueFormats[this.panel.format];
+          dataOther.valueFormatted = formatFunc2(dataOther.value, decimalInfo2.decimals, decimalInfo2.scaledDecimals);
+          dataOther.valueRounded = kbn.roundValue(dataOther.value, decimalInfo2.decimals);
+        }
+
+        // Add $__name variable for using in prefix or postfix
+        dataOther.scopedVars = _.extend({}, this.panel.scopedVars);
+        dataOther.scopedVars["__name"] = {value: this.series[1].label};
+      } else {
+        var error: any = new Error();
+        error.message = 'Multiple Series Error';
+        error.data = 'Metric query returns ' + this.series.length +
+          ' series. Single Stat Panel expects a single series.\n\nResponse:\n'+JSON.stringify(this.series);
+        throw error;
+      }
     }
 
     if (this.series && this.series.length > 0) {
@@ -382,8 +413,15 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
     function getSpan(className, fontSize, value)  {
       value = templateSrv.replace(value, data.scopedVars);
+      if (ctrl.dataOther.value ){
+        if (panel.doubleValuePercentage){
+          value = Math.floor((value / ctrl.dataOther.value) * 100) +  '%';
+        } else{
+          value = value + ' / ' + ctrl.dataOther.value;
+        }
+      }
       return '<span class="' + className + '" style="font-size:' + fontSize + '">' +
-        value + '</span>';
+        value +'</span>';
     }
 
     function getBigValueHtml() {

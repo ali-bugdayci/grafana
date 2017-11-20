@@ -1,15 +1,15 @@
 module.exports = function(config) {
+  'use strict';
 
   return {
     src:{
       options: {
-        paths: ["<%= srcDir %>/less"],
+        paths: ["<%= srcDir %>"],
         yuicompress: true
       },
       files: {
-        "<%= genDir %>/css/bootstrap.dark.min.css": "<%= srcDir %>/less/grafana.dark.less",
-        "<%= genDir %>/css/bootstrap.light.min.css": "<%= srcDir %>/less/grafana.light.less",
-        "<%= genDir %>/css/bootstrap-responsive.min.css": "<%= srcDir %>/less/grafana-responsive.less"
+        "<%= genDir %>/css/angular-wizard.min.css": "<%= srcDir %>/vendor/angular-wizard/dist/angular-wizard.less"
+
       }
     }
   };

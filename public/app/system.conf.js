@@ -33,7 +33,12 @@ System.config({
     "jquery.flot.gauge": "vendor/flot/jquery.flot.gauge",
     "d3": "vendor/d3/d3.js",
     "jquery.flot.dashes": "vendor/flot/jquery.flot.dashes",
-    "ace": "vendor/npm/ace-builds/src-noconflict/ace"
+    "ace": "vendor/npm/ace-builds/src-noconflict/ace",
+    'objectpath': 'vendor/objectpath/lib/ObjectPath.js',
+    'tv4': 'vendor/tv4/tv4.js',
+    'angular-schema-form': 'vendor/angular-schema-form/dist/schema-form.js',
+    'angular-schema-form-bootstrap': 'vendor/angular-schema-form-bootstrap/bootstrap-decorator.js',
+    'mgo-angular-wizard' : 'vendor/angular-wizard/dist/angular-wizard.js'
   },
 
   packages: {

@@ -14,6 +14,7 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   var loadPluginsBundle = new BundleLoader('app/features/plugins/all');
   var loadAdminBundle = new BundleLoader('app/features/admin/admin');
   var loadAlertingBundle = new BundleLoader('app/features/alerting/all');
+  var loadReposBundle = new BundleLoader('app/features/projects/all');
 
   $routeProvider
   .when('/', {
@@ -221,6 +222,24 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     controller: 'AlertNotificationEditCtrl',
     controllerAs: 'ctrl',
     resolve: loadAlertingBundle,
+  })
+  .when('/projects', {
+    templateUrl: 'public/app/features/projects/partials/project_list.html',
+    controller : 'ProjectsCtrl',
+    controllerAs: 'ctrl',
+    resolve: loadReposBundle,
+  })
+  .when('/projects/edit/:id', {
+    templateUrl: 'public/app/features/projects/partials/project_edit.html',
+    controller : 'ProjectEditCtrl',
+    controllerAs: 'ctrl',
+    resolve: loadReposBundle,
+  })
+  .when('/projects/new', {
+    templateUrl: 'public/app/features/projects/partials/project_edit.html',
+    controller : 'ProjectEditCtrl',
+    controllerAs: 'ctrl',
+    resolve: loadReposBundle,
   })
   .otherwise({
     templateUrl: 'public/app/partials/error.html',

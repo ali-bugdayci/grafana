@@ -16,6 +16,12 @@ import config from 'app/core/config';
 import _ from 'lodash';
 import moment from 'moment';
 import {coreModule} from './core/core';
+//import 'tv4';
+// import 'objectpath';
+import 'angular-schema-form';
+import 'angular-schema-form-bootstrap';
+import 'mgo-angular-wizard';
+
 
 export class GrafanaApp {
   registerFunctions: any;
@@ -84,6 +90,8 @@ export class GrafanaApp {
       'pasvaz.bindonce',
       'ui.bootstrap',
       'ui.bootstrap.tpls',
+      'schemaForm',
+      'mgo-angular-wizard'
     ];
 
     var module_types = ['controllers', 'directives', 'factories', 'services', 'filters', 'routes'];
