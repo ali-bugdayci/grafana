@@ -1,11 +1,7 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
-import moment from 'moment';
 import flatten from '../../../core/utils/flatten';
 import TimeSeries from '../../../core/time_series2';
 import TableModel from '../../../core/table_model';
-import angular from "angular";
 
 var transformers = {};
 
@@ -128,7 +124,7 @@ transformers['annotations'] = {
 
     for (var i = 0; i < data.annotations.length; i++) {
       var evt = data.annotations[i];
-      model.rows.push([evt.min, evt.title, evt.text, evt.tags]);
+      model.rows.push([evt.time, evt.title, evt.text, evt.tags]);
     }
   }
 };
@@ -139,6 +135,7 @@ transformers['table'] = {
     if (!data || data.length === 0) {
       return [];
     }
+    return data[0].columns;
   },
   transform: function(data, panel, model) {
     if (!data || data.length === 0) {

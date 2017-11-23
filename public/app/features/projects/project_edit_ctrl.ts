@@ -1,10 +1,8 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import angular from 'angular';
 import _ from 'lodash';
 
-import config from 'app/core/config';
-import {coreModule, appEvents} from 'app/core/core';
+import {coreModule} from 'app/core/core';
 
 const fieldHtmlClass = "gf-form-input max-width-20";
 const labelHtmlClass = "gf-form-label width-20";
@@ -22,10 +20,10 @@ export class ProjectEditCtrl {
 
   /** @ngInject */
   constructor(private $scope,
-              private navModelSrv,
+              //private _navModelSrv,
               private WizardHandler) {
 
-    this.navModel = navModelSrv.getDatasourceNav(0);
+    //this.navModel = _navModelSrv.getDatasourceNav(0);
     this.isNew = true;
     this.initNewDatasourceModel();
     this.detangleConfig = {
@@ -341,14 +339,14 @@ export class ProjectEditCtrl {
     });
     this.forms = [];
     _.forEach(_.groupBy(this.sections, 'sectionGroup'),(sectionGroup, key) => {
-      if (key === 'undefined'){
+      if (key === 'undefined') {
         _.forEach(sectionGroup, (sectionGroupItem) => {
           if (!sectionGroupItem.name) { return; }
           let tempFormList = [];
           tempFormList.push(this.formatForm(sectionGroupItem, key));
           this.forms.push(tempFormList);
         });
-      }else{
+      }else {
         let tempFormList = [];
         _.forEach(sectionGroup, (sectionGroupItem) => {
           tempFormList.push(this.formatForm(sectionGroupItem, key));
@@ -365,27 +363,27 @@ export class ProjectEditCtrl {
   }
 
   formatFieldData(parent, fieldData) {
-    if (parent.properties === undefined){
+    if (parent.properties === undefined) {
       parent.properties = {};
       parent.type = "object";
       parent.required = [];
     }
     if (!fieldData.isOptional) { parent.required.push(fieldData.name); }
-    if (fieldData.valueType === "str" || fieldData.valueType === "int" || fieldData.valueType === "datetime"){
+    if (fieldData.valueType === "str" || fieldData.valueType === "int" || fieldData.valueType === "datetime") {
       parent.properties[fieldData.name] = { title: fieldData.name};
-      if (fieldData.minValue){
+      if (fieldData.minValue) {
         parent.properties[fieldData.name].minimum = fieldData.minValue;
       }
-      if (fieldData.maxValue){
+      if (fieldData.maxValue) {
         parent.properties[fieldData.name].maximum = fieldData.maxValue;
       }
       switch (fieldData.valueType) {
         case "str": {
           parent.properties[fieldData.name].type = "string";
-          if (fieldData.enumeration){
+          if (fieldData.enumeration) {
             parent.properties[fieldData.name].enum = fieldData.enumeration;
           }
-          if (fieldData.pattern){
+          if (fieldData.pattern) {
             parent.properties[fieldData.name].pattern = fieldData.pattern;
           }
           break;
@@ -427,10 +425,10 @@ export class ProjectEditCtrl {
     }
   }
 
-  formatFormData(form, fieldData){
+  formatFormData(form, fieldData) {
     let key = form.key + (form.startEmpty !== undefined ? '[].' : '.') + fieldData.name;
     if ((fieldData.valueType === "SectionRef" && !fieldData.isMultiple) ||
-      (fieldData.enumeration && fieldData.valueType === 'str')){
+      (fieldData.enumeration && fieldData.valueType === 'str')) {
       form.items.push({
         "key": key,
         "style": {
@@ -443,7 +441,7 @@ export class ProjectEditCtrl {
         "labelHtmlClass": labelHtmlClass,
         "descriptionInfo": fieldData.description
       });
-    } else if (fieldData.valueType === "SectionRef" && fieldData.isMultiple){
+    } else if (fieldData.valueType === "SectionRef" && fieldData.isMultiple) {
       let tempForm = {};
       //tempForm['title'] = fieldData.name;
       tempForm['htmlClass'] = formGroupHtmlClass;
@@ -462,7 +460,7 @@ export class ProjectEditCtrl {
       });
       form.items.push(tempForm);
     }else {
-      if (fieldData.mutuallyExclusiveGroup){
+      if (fieldData.mutuallyExclusiveGroup) {
         let conditionString = this.generateMutuallyExclusiveGroupsCondition(form.key, fieldData);
         form.items.push({
           "key": key,
@@ -493,26 +491,26 @@ export class ProjectEditCtrl {
     }
   }
 
-  generateMutuallyExclusiveGroupsCondition(sectionName, fieldData){
+  generateMutuallyExclusiveGroupsCondition(sectionName, fieldData) {
     let tempSec = _.find(this.detangleConfig.sections, function (o) { return o.name === sectionName; });
-    if (!tempSec) { return; }
+    if (!tempSec) { return undefined; }
     let exclusiveGroupList = _.filter(tempSec.options, (option) => {
       return option.mutuallyExclusiveGroup === fieldData.mutuallyExclusiveGroup && option.name !== fieldData.name; });
     let conditionString = "";
     _.forEach(exclusiveGroupList, (exclusiveGroup, index) => {
       conditionString += "(ctrl.model." + tempSec.name + "." + exclusiveGroup.name + "  || '') !== ''";
-      if (exclusiveGroupList.length - 1 !== index){
+      if (exclusiveGroupList.length - 1 !== index) {
         conditionString += " || ";
       }
     });
     return conditionString;
   }
 
-  formatForm(section, key){
+  formatForm(section, key) {
     let tempForm = {};
     tempForm['title'] = section.name;
     tempForm['htmlClass'] = formGroupHtmlClass;
-    if (key !== 'undefined'){
+    if (key !== 'undefined') {
       tempForm['sectionGroup'] = key;
     }
     tempForm['key'] = section.name;
@@ -520,9 +518,9 @@ export class ProjectEditCtrl {
     if (section.isOptional) {
       let tempSection = _.find(this.sections, _.flow(
         _.property('options'),
-        _.partialRight(_.some, function(property){ return property.valueType === "SectionRef" &&
+        _.partialRight(_.some, function(property) { return property.valueType === "SectionRef" &&
           _.includes(property.enumeration, section.name) ;})));
-      let conditionParam = _.find(tempSection.options, function(property){ return property.valueType === "SectionRef" &&
+      let conditionParam = _.find(tempSection.options, function(property) { return property.valueType === "SectionRef" &&
         _.includes(property.enumeration, section.name) ;} );
       // section referans'ı yoksa return yap
       tempForm['condition'] = "ctrl.model." + tempSection.name + "." + conditionParam.name + " === '" + section.name + "'";
@@ -541,7 +539,7 @@ export class ProjectEditCtrl {
   exitValidation() {
     let currentStep = this.WizardHandler.wizard().currentStep();
     this.$scope.$broadcast('schemaFormValidate', currentStep.title);
-    if (currentStep.$$childTail.$$childTail.formCtrl.$valid){
+    if (currentStep.$$childTail.$$childTail.formCtrl.$valid) {
       this.WizardHandler.wizard().next();
     }
   }

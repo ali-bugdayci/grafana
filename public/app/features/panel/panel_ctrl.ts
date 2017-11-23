@@ -1,8 +1,5 @@
-///<reference path="../../headers/common.d.ts" />
-
 import config from 'app/core/config';
 import _ from 'lodash';
-import angular from 'angular';
 import $ from 'jquery';
 import {profiler} from 'app/core/profiler';
 import Remarkable from 'remarkable';
@@ -34,6 +31,7 @@ export class PanelCtrl {
   containerHeight: any;
   events: Emitter;
   timing: any;
+  loading: boolean;
 
   constructor($scope, $injector) {
     this.$injector = $injector;
@@ -213,7 +211,6 @@ export class PanelCtrl {
   }
 
   replacePanel(newPanel, oldPanel) {
-    var row = this.row;
     var index = _.indexOf(this.row.panels, oldPanel);
     this.row.panels.splice(index, 1);
 

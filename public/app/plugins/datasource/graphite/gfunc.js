@@ -1,8 +1,9 @@
 define([
   'lodash',
-  'jquery'
+  'jquery',
+  'app/core/utils/version'
 ],
-function (_, $) {
+function (_, $, version) {
   'use strict';
 
   var index = [];
@@ -822,6 +823,49 @@ function (_, $) {
     version: '1.0'
   });
 
+  addFuncDef({
+    name: 'seriesByTag',
+    category: categories.Special,
+    params: [
+      { name: "tagExpression", type: "string" },
+      { name: "tagExpression", type: "string", optional: true },
+      { name: "tagExpression", type: "string", optional: true },
+      { name: "tagExpression", type: "string", optional: true },
+    ],
+    version: '1.1'
+  });
+
+  addFuncDef({
+    name: "groupByTags",
+    category: categories.Special,
+    params: [
+      {
+        name: "function",
+        type: "string",
+        options: ['sum', 'avg', 'maxSeries']
+      },
+      { name: "tag", type: "string" },
+      { name: "tag", type: "string", optional: true },
+      { name: "tag", type: "string", optional: true },
+      { name: "tag", type: "string", optional: true },
+    ],
+    defaultParams: ["sum", "tag"],
+    version: '1.1'
+  });
+
+  addFuncDef({
+    name: "aliasByTags",
+    category: categories.Special,
+    params: [
+      { name: "tag", type: "string" },
+      { name: "tag", type: "string", optional: true },
+      { name: "tag", type: "string", optional: true },
+      { name: "tag", type: "string", optional: true },
+    ],
+    defaultParams: ["tag"],
+    version: '1.1'
+  });
+
   _.each(categories, function(funcList, catName) {
     categories[catName] = _.sortBy(funcList, 'name');
   });
@@ -873,7 +917,7 @@ function (_, $) {
     // if string contains ',' and next param is optional, split and update both
     if (this._hasMultipleParamsInString(strValue, index)) {
       _.each(strValue.split(','), function(partVal, idx) {
-        this.updateParam(partVal.trim(), idx);
+        this.updateParam(partVal.trim(), index + idx);
       }.bind(this));
       return;
     }
@@ -901,13 +945,7 @@ function (_, $) {
   };
 
   function isVersionRelatedFunction(func, graphiteVersion) {
-    return isVersionGreaterOrEqual(graphiteVersion, func.version) || !func.version;
-  }
-
-  function isVersionGreaterOrEqual(a, b) {
-    var a_num = Number(a);
-    var b_num = Number(b);
-    return a_num >= b_num;
+    return version.isVersionGtOrEq(graphiteVersion, func.version) || !func.version;
   }
 
   return {

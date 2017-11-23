@@ -50,11 +50,12 @@ var (
 	BuildStamp   int64
 
 	// Paths
-	LogsPath       string
-	HomePath       string
-	DataPath       string
-	PluginsPath    string
-	CustomInitPath = "conf/custom.ini"
+	LogsPath        string
+	HomePath        string
+	DataPath        string
+	PluginsPath     string
+	DatasourcesPath string
+	CustomInitPath  = "conf/custom.ini"
 
 	// Log settings.
 	LogModes   []string
@@ -89,6 +90,9 @@ var (
 	SnapShotTTLDays       int
 	SnapShotRemoveExpired bool
 
+	// Dashboard history
+	DashboardVersionsToKeep int
+
 	// User settings
 	AllowUserSignUp         bool
 	AllowUserOrgCreate      bool
@@ -121,6 +125,9 @@ var (
 
 	// Basic Auth
 	BasicAuthEnabled bool
+
+	// Plugin settings
+	PluginAppsSkipVerifyTLS bool
 
 	// Session settings.
 	SessionOptions session.Options
@@ -264,12 +271,16 @@ func applyCommandLineDefaultProperties(props map[string]string) {
 
 func applyCommandLineProperties(props map[string]string) {
 	for _, section := range Cfg.Sections() {
+		sectionName := section.Name() + "."
+		if section.Name() == ini.DEFAULT_SECTION {
+			sectionName = ""
+		}
 		for _, key := range section.Keys() {
-			keyString := fmt.Sprintf("%s.%s", section.Name(), key.Name())
+			keyString := sectionName + key.Name()
 			value, exists := props[keyString]
 			if exists {
-				key.SetValue(value)
 				appliedCommandLineProperties = append(appliedCommandLineProperties, fmt.Sprintf("%s=%s", keyString, value))
+				key.SetValue(value)
 			}
 		}
 	}
@@ -449,16 +460,11 @@ func validateStaticRootPath() error {
 		return nil
 	}
 
-	if _, err := os.Stat(path.Join(StaticRootPath, "css")); err == nil {
-		return nil
+	if _, err := os.Stat(path.Join(StaticRootPath, "build")); err != nil {
+		logger.Error("Failed to detect generated javascript files in public/build")
 	}
 
-	if _, err := os.Stat(StaticRootPath + "_gen/css"); err == nil {
-		StaticRootPath = StaticRootPath + "_gen"
-		return nil
-	}
-
-	return fmt.Errorf("Failed to detect generated css or javascript files in static root (%s), have you executed default grunt task?", StaticRootPath)
+	return nil
 }
 
 func NewConfigContext(args *CommandLineArgs) error {
@@ -468,6 +474,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 	Env = Cfg.Section("").Key("app_mode").MustString("development")
 	InstanceName = Cfg.Section("").Key("instance_name").MustString("unknown_instance_name")
 	PluginsPath = makeAbsolute(Cfg.Section("paths").Key("plugins").String(), HomePath)
+	DatasourcesPath = makeAbsolute(Cfg.Section("paths").Key("datasources").String(), HomePath)
 
 	server := Cfg.Section("server")
 	AppUrl, AppSubUrl = parseAppUrlAndSubUrl(server)
@@ -516,6 +523,10 @@ func NewConfigContext(args *CommandLineArgs) error {
 	SnapShotRemoveExpired = snapshots.Key("snapshot_remove_expired").MustBool(true)
 	SnapShotTTLDays = snapshots.Key("snapshot_TTL_days").MustInt(90)
 
+	// read dashboard settings
+	dashboards := Cfg.Section("dashboards")
+	DashboardVersionsToKeep = dashboards.Key("versions_to_keep").MustInt(20)
+
 	//  read data source proxy white list
 	DataProxyWhiteList = make(map[string]bool)
 	for _, hostAndIp := range util.SplitString(security.Key("data_source_proxy_whitelist").String()) {
@@ -560,6 +571,9 @@ func NewConfigContext(args *CommandLineArgs) error {
 	// basic auth
 	authBasic := Cfg.Section("auth.basic")
 	BasicAuthEnabled = authBasic.Key("enabled").MustBool(true)
+
+	// global plugin settings
+	PluginAppsSkipVerifyTLS = Cfg.Section("plugins").Key("app_tls_skip_verify_insecure").MustBool(false)
 
 	// PhantomJS rendering
 	ImagesDir = filepath.Join(DataPath, "png")
@@ -656,4 +670,6 @@ func LogConfigurationInfo() {
 	logger.Info("Path Data", "path", DataPath)
 	logger.Info("Path Logs", "path", LogsPath)
 	logger.Info("Path Plugins", "path", PluginsPath)
+	logger.Info("Path Datasources", "path", DatasourcesPath)
+	logger.Info("App mode " + Env)
 }

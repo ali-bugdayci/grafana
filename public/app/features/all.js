@@ -3,9 +3,11 @@ define([
   './dashlinks/module',
   './annotations/all',
   './templating/all',
+  './plugins/all',
   './dashboard/all',
   './playlist/all',
   './snapshot/all',
   './panel/all',
+  './projects/all',
   './styleguide/styleguide',
 ], function () {});

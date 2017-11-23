@@ -21,7 +21,7 @@ func (hs *HttpServer) registerRoutes() {
 	// automatically set HEAD for every GET
 	macaronR.SetAutoHead(true)
 
-	r := newRouteRegister(middleware.RequestMetrics)
+	r := newRouteRegister(middleware.RequestMetrics, middleware.RequestTracing)
 
 	// not logged in views
 	r.Get("/", reqSignedIn, Index)
@@ -199,10 +199,10 @@ func (hs *HttpServer) registerRoutes() {
 		// Data sources
 		apiRoute.Group("/datasources", func(datasourceRoute RouteRegister) {
 			datasourceRoute.Get("/", wrap(GetDataSources))
-			datasourceRoute.Post("/", quota("data_source"), bind(m.AddDataSourceCommand{}), AddDataSource)
+			datasourceRoute.Post("/", quota("data_source"), bind(m.AddDataSourceCommand{}), wrap(AddDataSource))
 			datasourceRoute.Put("/:id", bind(m.UpdateDataSourceCommand{}), wrap(UpdateDataSource))
-			datasourceRoute.Delete("/:id", DeleteDataSourceById)
-			datasourceRoute.Delete("/name/:name", DeleteDataSourceByName)
+			datasourceRoute.Delete("/:id", wrap(DeleteDataSourceById))
+			datasourceRoute.Delete("/name/:name", wrap(DeleteDataSourceByName))
 			datasourceRoute.Get("/:id", wrap(GetDataSourceById))
 			datasourceRoute.Get("/name/:name", wrap(GetDataSourceByName))
 		}, reqOrgAdmin)
@@ -267,7 +267,7 @@ func (hs *HttpServer) registerRoutes() {
 
 		apiRoute.Group("/alerts", func(alertsRoute RouteRegister) {
 			alertsRoute.Post("/test", bind(dtos.AlertTestCommand{}), wrap(AlertTest))
-			alertsRoute.Post("/:alertId/pause", bind(dtos.PauseAlertCommand{}), wrap(PauseAlert), reqEditorRole)
+			alertsRoute.Post("/:alertId/pause", reqEditorRole, bind(dtos.PauseAlertCommand{}), wrap(PauseAlert))
 			alertsRoute.Get("/:alertId", ValidateOrgAlert, wrap(GetAlert))
 			alertsRoute.Get("/", wrap(GetAlerts))
 			alertsRoute.Get("/states-for-dashboard", wrap(GetAlertStatesForDashboard))
@@ -289,6 +289,10 @@ func (hs *HttpServer) registerRoutes() {
 
 		apiRoute.Group("/annotations", func(annotationsRoute RouteRegister) {
 			annotationsRoute.Post("/", bind(dtos.PostAnnotationsCmd{}), wrap(PostAnnotation))
+			annotationsRoute.Delete("/:annotationId", wrap(DeleteAnnotationById))
+			annotationsRoute.Put("/:annotationId", bind(dtos.UpdateAnnotationsCmd{}), wrap(UpdateAnnotation))
+			annotationsRoute.Delete("/region/:regionId", wrap(DeleteAnnotationRegion))
+			annotationsRoute.Post("/graphite", bind(dtos.PostGraphiteAnnotationsCmd{}), wrap(PostGraphiteAnnotation))
 		}, reqEditorRole)
 
 		// error test
@@ -316,8 +320,8 @@ func (hs *HttpServer) registerRoutes() {
 	r.Any("/api/gnet/*", reqSignedIn, ProxyGnetRequest)
 
 	// Gravatar service.
-	avt := avatar.CacheServer()
-	r.Get("/avatar/:hash", avt.ServeHTTP)
+	avatarCacheServer := avatar.NewCacheServer()
+	r.Get("/avatar/:hash", avatarCacheServer.Handler)
 
 	// Websocket
 	r.Any("/ws", hs.streamManager.Serve)

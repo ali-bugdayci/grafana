@@ -1,10 +1,10 @@
-///<reference path="../../../headers/common.d.ts" />
 import angular from 'angular';
 import _ from 'lodash';
 import $ from 'jquery';
-import d3 from 'd3';
+import * as d3 from 'd3';
 import {contextSrv} from 'app/core/core';
 import {tickStep} from 'app/core/utils/ticks';
+import {getColorScale, getOpacityScale} from './color_scale';
 
 let module = angular.module('grafana.directives');
 
@@ -31,7 +31,7 @@ module.directive('colorLegend', function() {
 
         if (panel.color.mode === 'spectrum') {
           let colorScheme = _.find(ctrl.colorSchemes, {value: panel.color.colorScheme});
-          let colorScale = getColorScale(colorScheme, legendWidth);
+          let colorScale = getColorScale(colorScheme, contextSrv.user.lightTheme, legendWidth);
           drawSimpleColorLegend(elem, colorScale);
         } else if (panel.color.mode === 'opacity') {
           let colorOptions = panel.color;
@@ -94,7 +94,7 @@ function drawColorLegend(elem, colorScheme, rangeFrom, rangeTo, maxValue, minVal
   let widthFactor = legendWidth / (rangeTo - rangeFrom);
   let valuesRange = d3.range(rangeFrom, rangeTo, rangeStep);
 
-  let colorScale = getColorScale(colorScheme, maxValue, minValue);
+  let colorScale = getColorScale(colorScheme, contextSrv.user.lightTheme, maxValue, minValue);
   legend.selectAll(".heatmap-color-legend-rect")
     .data(valuesRange)
     .enter().append("rect")
@@ -116,7 +116,10 @@ function drawOpacityLegend(elem, options, rangeFrom, rangeTo, maxValue, minValue
   let legendWidth = Math.floor(legendElem.outerWidth()) - 30;
   let legendHeight = legendElem.attr("height");
 
-  let rangeStep = 10;
+  let rangeStep = 1;
+  if (rangeTo - rangeFrom > legendWidth) {
+    rangeStep = Math.floor((rangeTo - rangeFrom) / legendWidth);
+  }
   let widthFactor = legendWidth / (rangeTo - rangeFrom);
   let valuesRange = d3.range(rangeFrom, rangeTo, rangeStep);
 
@@ -143,7 +146,6 @@ function drawLegendValues(elem, colorScale, rangeFrom, rangeTo, maxValue, minVal
     return;
   }
 
-  let legendValueDomain = _.sortBy(colorScale.domain());
   let legendValueScale = d3.scaleLinear()
     .domain([0, rangeTo])
     .range([0, legendWidth]);
@@ -154,8 +156,9 @@ function drawLegendValues(elem, colorScale, rangeFrom, rangeTo, maxValue, minVal
     .tickSize(2);
 
   let colorRect = legendElem.find(":first-child");
-  let posY = colorRect.height() + 2;
+  let posY = getSvgElemHeight(legendElem) + 2;
   let posX = getSvgElemX(colorRect);
+
   d3.select(legendElem.get(0)).append("g")
     .attr("class", "axis")
     .attr("transform", "translate(" + posX + "," + posY + ")")
@@ -229,35 +232,19 @@ function clearLegend(elem) {
   legendElem.empty();
 }
 
-function getColorScale(colorScheme, maxValue, minValue = 0) {
-  let colorInterpolator = d3[colorScheme.value];
-  let colorScaleInverted = colorScheme.invert === 'always' ||
-    (colorScheme.invert === 'dark' && !contextSrv.user.lightTheme);
-
-  let start = colorScaleInverted ? maxValue : minValue;
-  let end = colorScaleInverted ? minValue : maxValue;
-
-  return d3.scaleSequential(colorInterpolator).domain([start, end]);
-}
-
-function getOpacityScale(options, maxValue, minValue = 0) {
-  let legendOpacityScale;
-  if (options.colorScale === 'linear') {
-    legendOpacityScale = d3.scaleLinear()
-    .domain([minValue, maxValue])
-    .range([0, 1]);
-  } else if (options.colorScale === 'sqrt') {
-    legendOpacityScale = d3.scalePow().exponent(options.exponent)
-    .domain([minValue, maxValue])
-    .range([0, 1]);
-  }
-  return legendOpacityScale;
-}
-
 function getSvgElemX(elem) {
   let svgElem = elem.get(0);
   if (svgElem && svgElem.x && svgElem.x.baseVal) {
-    return elem.get(0).x.baseVal.value;
+    return svgElem.x.baseVal.value;
+  } else {
+    return 0;
+  }
+}
+
+function getSvgElemHeight(elem) {
+  let svgElem = elem.get(0);
+  if (svgElem && svgElem.height && svgElem.height.baseVal) {
+    return svgElem.height.baseVal.value;
   } else {
     return 0;
   }

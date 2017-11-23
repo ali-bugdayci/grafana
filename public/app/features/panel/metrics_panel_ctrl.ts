@@ -1,21 +1,16 @@
-///<reference path="../../headers/common.d.ts" />
-
-import angular from 'angular';
 import config from 'app/core/config';
 import $ from 'jquery';
 import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
-import {PanelCtrl} from './panel_ctrl';
+import {PanelCtrl} from 'app/features/panel/panel_ctrl';
 
 import * as rangeUtil from 'app/core/utils/rangeutil';
 import * as dateMath from 'app/core/utils/datemath';
 
-import {Subject} from 'vendor/npm/rxjs/Subject';
 import {metricsTabDirective} from './metrics_tab';
 
 class MetricsPanelCtrl extends PanelCtrl {
   scope: any;
-  loading: boolean;
   datasource: any;
   datasourceName: any;
   $q: any;
@@ -45,6 +40,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.timeSrv = $injector.get('timeSrv');
     this.templateSrv = $injector.get('templateSrv');
     this.scope = $scope;
+    this.panel.datasource = this.panel.datasource || null;
 
     if (!this.panel.targets) {
       this.panel.targets = [{}];
@@ -222,13 +218,13 @@ class MetricsPanelCtrl extends PanelCtrl {
     });
 
     var metricsQuery = {
+      timezone: this.dashboard.getTimezone(),
       panelId: this.panel.id,
       range: this.range,
       rangeRaw: this.range.raw,
       interval: this.interval,
       intervalMs: this.intervalMs,
       targets: this.panel.targets,
-      format: this.panel.renderer === 'png' ? 'png' : 'json',
       maxDataPoints: this.resolution,
       scopedVars: scopedVars,
       cacheTimeout: this.panel.cacheTimeout

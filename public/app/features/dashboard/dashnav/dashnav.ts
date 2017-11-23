@@ -5,7 +5,6 @@ import moment from 'moment';
 import angular from 'angular';
 import {appEvents, NavModel} from 'app/core/core';
 import {DashboardModel} from '../model';
-import {DashboardExporter} from '../export/exporter';
 
 export class DashNavCtrl {
   dashboard: DashboardModel;
@@ -18,12 +17,10 @@ export class DashNavCtrl {
     private $rootScope,
     private dashboardSrv,
     private $location,
-    private playlistSrv,
     private backendSrv,
-    private $timeout,
-    private datasourceSrv,
-    private navModelSrv,
-    private contextSrv) {
+    private contextSrv,
+    public playlistSrv,
+    navModelSrv) {
       this.navModel = navModelSrv.getDashboardNav(this.dashboard, this);
 
       appEvents.on('save-dashboard', this.saveDashboard.bind(this), $scope);
@@ -52,14 +49,9 @@ export class DashNavCtrl {
     }
 
     starDashboard() {
-      if (this.dashboard.meta.isStarred) {
-        return this.backendSrv.delete('/api/user/stars/dashboard/' + this.dashboard.id).then(() =>  {
-          this.dashboard.meta.isStarred = false;
-        });
-      }
-
-      this.backendSrv.post('/api/user/stars/dashboard/' + this.dashboard.id).then(() => {
-        this.dashboard.meta.isStarred = true;
+      this.dashboardSrv.starDashboard(this.dashboard.id, this.dashboard.meta.isStarred)
+        .then(newState => {
+          this.dashboard.meta.isStarred = newState;
       });
     }
 

@@ -1,6 +1,5 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import angular from 'angular';
 import _ from 'lodash';
 
 import config from 'app/core/config';
@@ -34,7 +33,6 @@ export class DataSourceEditCtrl {
 
   /** @ngInject */
   constructor(
-    private $scope,
     private $q,
     private backendSrv,
     private $routeParams,
@@ -43,7 +41,7 @@ export class DataSourceEditCtrl {
     private navModelSrv,
   ) {
 
-    this.navModel = navModelSrv.getDatasourceNav(0);
+    this.navModel = this.navModelSrv.getDatasourceNav(0);
     this.isNew = true;
     this.datasources = [];
     this.tabIndex = 0;
@@ -151,14 +149,20 @@ export class DataSourceEditCtrl {
       return;
     }
 
+    if (this.current.readOnly) {
+      return;
+    }
+
     if (this.current.id) {
-      return this.backendSrv.put('/api/datasources/' + this.current.id, this.current).then(() => {
+      return this.backendSrv.put('/api/datasources/' + this.current.id, this.current).then((result) => {
+        this.current = result.datasource;
         this.updateFrontendSettings().then(() => {
           this.testDatasource();
         });
       });
     } else {
       return this.backendSrv.post('/api/datasources', this.current).then(result => {
+        this.current = result.datasource;
         this.updateFrontendSettings();
 
         datasourceCreated = true;

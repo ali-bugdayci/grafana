@@ -1,10 +1,8 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import angular from 'angular';
 import _ from 'lodash';
-import moment from 'moment';
-
 import * as dateMath from 'app/core/utils/datemath';
+import {isVersionGtOrEq, SemVersion} from 'app/core/utils/version';
 
 /** @ngInject */
 export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv) {
@@ -12,6 +10,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
   this.url = instanceSettings.url;
   this.name = instanceSettings.name;
   this.graphiteVersion = instanceSettings.jsonData.graphiteVersion || '0.9';
+  this.supportsTags = supportsTags(this.graphiteVersion);
   this.cacheTimeout = instanceSettings.cacheTimeout;
   this.withCredentials = instanceSettings.withCredentials;
   this.render_method = instanceSettings.render_method || 'POST';
@@ -71,6 +70,18 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     return result;
   };
 
+  this.parseTags = function(tagString) {
+    let tags = [];
+    tags = tagString.split(',');
+    if (tags.length === 1) {
+      tags = tagString.split(' ');
+      if (tags[0] === '') {
+        tags = [];
+      }
+    }
+    return tags;
+  };
+
   this.annotationQuery = function(options) {
     // Graphite metric as annotation
     if (options.annotation.target) {
@@ -105,19 +116,25 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     } else {
       // Graphite event as annotation
       var tags = templateSrv.replace(options.annotation.tags);
-      return this.events({range: options.rangeRaw, tags: tags}).then(function(results) {
+      return this.events({range: options.rangeRaw, tags: tags}).then(results => {
         var list = [];
         for (var i = 0; i < results.data.length; i++) {
           var e = results.data[i];
+
+          var tags = e.tags;
+          if (_.isString(e.tags)) {
+            tags = this.parseTags(e.tags);
+          }
 
           list.push({
             annotation: options.annotation,
             time: e.when * 1000,
             title: e.what,
-            tags: e.tags,
+            tags: tags,
             text: e.data
           });
         }
+
         return list;
       });
     }
@@ -129,7 +146,6 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       if (options.tags) {
         tags = '&tags=' + options.tags;
       }
-
       return this.doGraphiteRequest({
         method: 'GET',
         url: '/events/get_data?from=' + this.translateTime(options.range.from, false) +
@@ -200,6 +216,126 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
           expandable: metric.expandable ? true : false
         };
       });
+    });
+  };
+
+  this.getTags = function(optionalOptions) {
+    let options = optionalOptions || {};
+
+    let httpOptions: any =  {
+      method: 'GET',
+      url: '/tags',
+      // for cancellations
+      requestId: options.requestId,
+    };
+
+    if (options && options.range) {
+      httpOptions.params.from = this.translateTime(options.range.from, false);
+      httpOptions.params.until = this.translateTime(options.range.to, true);
+    }
+
+    return this.doGraphiteRequest(httpOptions).then(results => {
+      return _.map(results.data, tag => {
+        return {
+          text: tag.tag,
+          id: tag.id
+        };
+      });
+    });
+  };
+
+  this.getTagValues = function(tag, optionalOptions) {
+    let options = optionalOptions || {};
+
+    let httpOptions: any = {
+      method: 'GET',
+      url: '/tags/' + tag,
+      // for cancellations
+      requestId: options.requestId,
+    };
+
+    if (options && options.range) {
+      httpOptions.params.from = this.translateTime(options.range.from, false);
+      httpOptions.params.until = this.translateTime(options.range.to, true);
+    }
+
+    return this.doGraphiteRequest(httpOptions).then(results => {
+      if (results.data && results.data.values) {
+        return _.map(results.data.values, value => {
+          return {
+            text: value.value,
+            id: value.id
+          };
+        });
+      } else {
+        return [];
+      }
+    });
+  };
+
+  this.getTagsAutoComplete = (expression, tagPrefix) => {
+    let httpOptions: any = {
+      method: 'GET',
+      url: '/tags/autoComplete/tags',
+      params: {
+        expr: expression
+      }
+    };
+
+    if (tagPrefix) {
+      httpOptions.params.tagPrefix = tagPrefix;
+    }
+
+    return this.doGraphiteRequest(httpOptions).then(results => {
+      if (results.data) {
+        return _.map(results.data, (tag) => {
+          return { text: tag };
+        });
+      } else {
+        return [];
+      }
+    });
+  };
+
+  this.getTagValuesAutoComplete = (expression, tag, valuePrefix) => {
+    let httpOptions: any = {
+      method: 'GET',
+      url: '/tags/autoComplete/values',
+      params: {
+        expr: expression,
+        tag: tag
+      }
+    };
+
+    if (valuePrefix) {
+      httpOptions.params.valuePrefix = valuePrefix;
+    }
+
+    return this.doGraphiteRequest(httpOptions).then(results => {
+      if (results.data) {
+        return _.map(results.data, (value) => {
+          return { text: value };
+        });
+      } else {
+        return [];
+      }
+    });
+  };
+
+  this.getVersion = function() {
+    let httpOptions = {
+      method: 'GET',
+      url: '/version/_', // Prevent last / trimming
+    };
+
+    return this.doGraphiteRequest(httpOptions).then(results => {
+      if (results.data) {
+        let semver = new SemVersion(results.data);
+        return semver.isValid() ? results.data : '';
+      }
+      return '';
+    }).catch(() => {
+      return '';
     });
   };
 
@@ -288,4 +424,8 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
 
     return clean_options;
   };
+}
+
+function supportsTags(version: string): boolean {
+  return isVersionGtOrEq(version, '1.1');
 }

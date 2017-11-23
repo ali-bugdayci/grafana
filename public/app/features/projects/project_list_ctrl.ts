@@ -1,7 +1,5 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import angular from 'angular';
-import _ from 'lodash';
 import coreModule from '../../core/core_module';
 
 export class ProjectsCtrl {
@@ -11,8 +9,6 @@ export class ProjectsCtrl {
   /** @ngInject */
   constructor(
     private $scope,
-    private $location,
-    private $http,
     private backendSrv,
     private datasourceSrv,
     private navModelSrv

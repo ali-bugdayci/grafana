@@ -1,8 +1,6 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import angular from 'angular';
 import _ from 'lodash';
-import InfluxQueryBuilder from './query_builder';
+import {InfluxQueryBuilder} from './query_builder';
 import InfluxQuery from './influx_query';
 import queryPart from './query_part';
 import {QueryCtrl} from 'app/plugins/sdk';
@@ -352,12 +350,13 @@ export class InfluxQueryCtrl extends QueryCtrl {
     this.panelCtrl.refresh();
   }
 
-  getTagValueOperator(tagValue, tagOperator) {
+  getTagValueOperator(tagValue, tagOperator): string {
     if (tagOperator !== '=~' && tagOperator !== '!~' && /^\/.*\/$/.test(tagValue)) {
       return '=~';
     } else if ((tagOperator === '=~' || tagOperator === '!~') && /^(?!\/.*\/$)/.test(tagValue)) {
       return '=';
     }
+    return null;
   }
 
   getCollapsedText() {
