@@ -3,55 +3,24 @@
 import coreModule from '../../core/core_module';
 
 export class ProjectsCtrl {
-  datasources: any;
+  projects: any;
   navModel: any;
 
   /** @ngInject */
   constructor(
-    private $scope,
     private backendSrv,
-    private datasourceSrv,
     private navModelSrv
   ) {
 
     this.navModel = this.navModelSrv.getDatasourceNav(0);
 
-    backendSrv.get('/api/datasources').then(result => {
-      this.datasources = result;
+    backendSrv.get('http://192.168.1.106:8080/api/config/projects').then(result => {
+      console.log(result);
+      this.projects = result.projects;
     });
   }
 
-  removeDataSourceConfirmed(ds) {
 
-    this.backendSrv.delete('/api/datasources/' + ds.id)
-    .then(() => {
-      this.$scope.appEvent('alert-success', ['Datasource deleted', '']);
-    }, () => {
-      this.$scope.appEvent('alert-error', ['Unable to delete datasource', '']);
-    }).then(() => {
-      this.backendSrv.get('/api/datasources')
-      .then((result) => {
-        this.datasources = result;
-      });
-      this.backendSrv.get('/api/frontend/settings')
-      .then((settings) => {
-        this.datasourceSrv.init(settings.datasources);
-      });
-    });
-  }
-
-  removeDataSource(ds) {
-
-    this.$scope.appEvent('confirm-modal', {
-      title: 'Delete',
-      text: 'Are you sure you want to delete datasource ' + ds.name + '?',
-      yesText: "Delete",
-      icon: "fa-trash",
-      onConfirm: () => {
-        this.removeDataSourceConfirmed(ds);
-      }
-    });
-  }
 
 }
 

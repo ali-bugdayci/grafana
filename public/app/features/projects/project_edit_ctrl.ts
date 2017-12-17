@@ -3,6 +3,7 @@
 import _ from 'lodash';
 
 import {coreModule} from 'app/core/core';
+import {values} from "d3-collection";
 
 const fieldHtmlClass = "gf-form-input max-width-20";
 const labelHtmlClass = "gf-form-label width-20";
@@ -21,345 +22,386 @@ export class ProjectEditCtrl {
   /** @ngInject */
   constructor(private $scope,
               //private _navModelSrv,
+              private backendSrv,
+              private $routeParams,
               private WizardHandler) {
 
     //this.navModel = _navModelSrv.getDatasourceNav(0);
     this.isNew = true;
-    this.initNewDatasourceModel();
-    this.detangleConfig = {
-      "sections": [
-        {
-          "name": "Project",
-          "isOptional": false,
-          "options": [
-            {
-              "name": "Name",
-              "valueType": "str",
-              "isOptional": false,
-              "isMultiple": false,
-              "isExtended": false,
-              "description": "Name of the project"
-            }
-          ]
-        },
-        {
-          "name": "Repository",
-          "isOptional": false,
-          "options": [
-            {
-              "name": "Type",
-              "valueType": "SectionRef",
-              "isOptional": false,
-              "enumeration": [
-                "git",
-                "svn"
-              ],
-              "isMultiple": false,
-              "isExtended": false,
-              "description": "Type of VCS"
-            },
-            {
-              "name": "URL",
-              "valueType": "str",
-              "isOptional": false,
-              "isMultiple": false,
-              "isExtended": false,
-              "pattern": "http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+"
-            }
-          ]
-        },
-        {
-          "name": "RepositoryFilter",
-          "isOptional": false,
-          "options": [
-            {
-              "name": "SubPath",
-              "valueType": "str",
-              "isOptional": true,
-              "isMultiple": false,
-              "isExtended": false
-            },
-            {
-              "name": "FilenameIncludeRegex",
-              "valueType": "str",
-              "isOptional": true,
-              "isMultiple": false,
-              "isExtended": false,
-              "mutuallyExclusiveGroup": "FilenameInclude"
-            },
-            {
-              "name": "FilenameExcludeRegex",
-              "valueType": "str",
-              "isOptional": true,
-              "isMultiple": false,
-              "isExtended": false,
-              "mutuallyExclusiveGroup": "FilenameExclude"
-            },
-            {
-              "name": "FilenameIncludeGlob",
-              "valueType": "str",
-              "isOptional": true,
-              "isMultiple": false,
-              "isExtended": false,
-              "mutuallyExclusiveGroup": "FilenameInclude"
-            },
-            {
-              "name": "FilenameExcludeGlob",
-              "valueType": "str",
-              "isOptional": true,
-              "isMultiple": false,
-              "isExtended": false,
-              "mutuallyExclusiveGroup": "FilenameExclude"
-            },
-            {
-              "name": "DirectoryIncludeRegex",
-              "valueType": "str",
-              "isOptional": true,
-              "isMultiple": false,
-              "isExtended": false,
-              "mutuallyExclusiveGroup": "DirectoryInclude"
-            },
-            {
-              "name": "DirectoryExcludeRegex",
-              "valueType": "str",
-              "isOptional": true,
-              "isMultiple": false,
-              "isExtended": false,
-              "mutuallyExclusiveGroup": "DirectoryExclude"
-            },
-            {
-              "name": "DirectoryIncludeGlob",
-              "valueType": "str",
-              "isOptional": true,
-              "isMultiple": false,
-              "isExtended": false,
-              "mutuallyExclusiveGroup": "DirectoryInclude"
-            },
-            {
-              "name": "DirectoryExcludeGlob",
-              "valueType": "str",
-              "isOptional": true,
-              "isMultiple": false,
-              "isExtended": false,
-              "mutuallyExclusiveGroup": "DirectoryExclude"
-            }
-          ]
-        },
-        {
-          "name": "git",
-          "isOptional": true,
-          "options": [
-            {
-              "name": "RevRanges",
-              "valueType": "str",
-              "isOptional": false,
-              "isMultiple": false,
-              "isExtended": false
-            },
-            {
-              "name": "SinceDate",
-              "valueType": "datetime",
-              "isOptional": true,
-              "isMultiple": false,
-              "isExtended": false
-            },
-            {
-              "name": "UntilDate",
-              "valueType": "datetime",
-              "isOptional": true,
-              "isMultiple": false,
-              "isExtended": false
-            }
-          ]
-        },
-        {
-          "name": "svn",
-          "isOptional": true,
-          "options": [
-            {
-              "name": "RevRanges",
-              "valueType": "str",
-              "isOptional": false,
-              "isMultiple": false,
-              "isExtended": false
-            },
-            {
-              "name": "SinceDate",
-              "valueType": "datetime",
-              "isOptional": true,
-              "isMultiple": false,
-              "isExtended": false
-            },
-            {
-              "name": "UntilDate",
-              "valueType": "datetime",
-              "isOptional": true,
-              "isMultiple": false,
-              "isExtended": false
-            }
-          ]
-        },
-        {
-          "name": "Issues",
-          "isOptional": false,
-          "options": [
-            {
-              "name": "IssueTracker",
-              "valueType": "SectionRef",
-              "isOptional": false,
-              "enumeration": [
-                "JIRA",
-                "Redmine",
-                "TFS"
-              ],
-              "isMultiple": false,
-              "isExtended": false
-            },
-            {
-              "name": "IssueURL",
-              "valueType": "str",
-              "isOptional": false,
-              "isMultiple": false,
-              "isExtended": false
-            },
-            {
-              "name": "CommitIssueFilter",
-              "valueType": "SectionRef",
-              "isOptional": false,
-              "sectionType": "issue-filter",
-              "isMultiple": true,
-              "isExtended": false
-            }
-          ]
-        },
-        {
-          "name": "JIRA",
-          "isOptional": true,
-          "options": [
-            {
-              "name": "JQLFilter",
-              "valueType": "str",
-              "isOptional": false,
-              "isMultiple": false,
-              "isExtended": false
-            }
-          ]
-        },
-        {
-          "isOptional": true,
-          "sectionType": "issue-filter",
-          "options": [
-            {
-              "name": "Pattern",
-              "valueType": "str",
-              "isOptional": false,
-              "isMultiple": false,
-              "isExtended": false
-            },
-            {
-              "name": "StartLine",
-              "valueType": "int",
-              "isOptional": false,
-              "isMultiple": false,
-              "isExtended": false,
-              "minValue": 5,
-              "maxValue": 30
-            },
-            {
-              "name": "EndLine",
-              "valueType": "int",
-              "isOptional": false,
-              "isMultiple": false,
-              "isExtended": false
-            },
-            {
-              "name": "AggregateIssueLinks",
-              "valueType": "str",
-              "isOptional": false,
-              "enumeration": [
-                "Is Part Of",
-                "Is Story Of"
-              ],
-              "isMultiple": false,
-              "isExtended": false
-            }
-          ]
-        },
-        {
-          "name": "Processing",
-          "isOptional": false,
-          "sectionGroup": "Advanced",
-          "options": [
-            {
-              "name": "DirectoryRenameDetectionTimeout",
-              "valueType": "int",
-              "isOptional": true,
-              "default": 30,
-              "isMultiple": false,
-              "isExtended": false
-            },
-            {
-              "name": "CompletionPeriod",
-              "valueType": "int",
-              "isOptional": false,
-              "isMultiple": false,
-              "isExtended": false
-            }
-          ]
-        },
-        {
-          "name": "Misc",
-          "isOptional": false,
-          "sectionGroup": "Advanced",
-          "options": [
-            {
-              "name": "Encoding",
-              "valueType": "str",
-              "isOptional": false,
-              "isMultiple": false,
-              "isExtended": false
-            }
-          ]
-        }
-      ]
-    };
+    if (this.$routeParams.id) {
+      this.getProjectById(this.$routeParams.id);
+    }else {
+      this.model = {};
+    }
+    this.loadConfigurations();
+    // this.detangleConfig = {
+    //   "sections": [
+    //     {
+    //       "name": "Project",
+    //       "isOptional": false,
+    //       "options": [
+    //         {
+    //           "name": "Name",
+    //           "valueType": "str",
+    //           "isOptional": false,
+    //           "isMultiple": false,
+    //           "isExtended": false,
+    //           "description": "Name of the project"
+    //         }
+    //       ]
+    //     },
+    //     {
+    //       "name": "Repository",
+    //       "isOptional": false,
+    //       "options": [
+    //         {
+    //           "name": "Type",
+    //           "valueType": "SectionRef",
+    //           "isOptional": false,
+    //           "enumeration": [
+    //             "git",
+    //             "svn"
+    //           ],
+    //           "isMultiple": false,
+    //           "isExtended": false,
+    //           "description": "Type of VCS"
+    //         },
+    //         {
+    //           "name": "URL",
+    //           "valueType": "str",
+    //           "isOptional": false,
+    //           "isMultiple": false,
+    //           "isExtended": false,
+    //           "pattern": "http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+"
+    //         }
+    //       ]
+    //     },
+    //     {
+    //       "name": "RepositoryFilter",
+    //       "isOptional": false,
+    //       "options": [
+    //         {
+    //           "name": "SubPath",
+    //           "valueType": "str",
+    //           "isOptional": true,
+    //           "isMultiple": false,
+    //           "isExtended": false
+    //         },
+    //         {
+    //           "name": "FilenameIncludeRegex",
+    //           "valueType": "str",
+    //           "isOptional": true,
+    //           "isMultiple": false,
+    //           "isExtended": false,
+    //           "mutuallyExclusiveGroup": "FilenameInclude"
+    //         },
+    //         {
+    //           "name": "FilenameExcludeRegex",
+    //           "valueType": "str",
+    //           "isOptional": true,
+    //           "isMultiple": false,
+    //           "isExtended": false,
+    //           "mutuallyExclusiveGroup": "FilenameExclude"
+    //         },
+    //         {
+    //           "name": "FilenameIncludeGlob",
+    //           "valueType": "str",
+    //           "isOptional": true,
+    //           "isMultiple": false,
+    //           "isExtended": false,
+    //           "mutuallyExclusiveGroup": "FilenameInclude"
+    //         },
+    //         {
+    //           "name": "FilenameExcludeGlob",
+    //           "valueType": "str",
+    //           "isOptional": true,
+    //           "isMultiple": false,
+    //           "isExtended": false,
+    //           "mutuallyExclusiveGroup": "FilenameExclude"
+    //         },
+    //         {
+    //           "name": "DirectoryIncludeRegex",
+    //           "valueType": "str",
+    //           "isOptional": true,
+    //           "isMultiple": false,
+    //           "isExtended": false,
+    //           "mutuallyExclusiveGroup": "DirectoryInclude"
+    //         },
+    //         {
+    //           "name": "DirectoryExcludeRegex",
+    //           "valueType": "str",
+    //           "isOptional": true,
+    //           "isMultiple": false,
+    //           "isExtended": false,
+    //           "mutuallyExclusiveGroup": "DirectoryExclude"
+    //         },
+    //         {
+    //           "name": "DirectoryIncludeGlob",
+    //           "valueType": "str",
+    //           "isOptional": true,
+    //           "isMultiple": false,
+    //           "isExtended": false,
+    //           "mutuallyExclusiveGroup": "DirectoryInclude"
+    //         },
+    //         {
+    //           "name": "DirectoryExcludeGlob",
+    //           "valueType": "str",
+    //           "isOptional": true,
+    //           "isMultiple": false,
+    //           "isExtended": false,
+    //           "mutuallyExclusiveGroup": "DirectoryExclude"
+    //         }
+    //       ]
+    //     },
+    //     {
+    //       "name": "git",
+    //       "isOptional": true,
+    //       "options": [
+    //         {
+    //           "name": "RevRanges",
+    //           "valueType": "str",
+    //           "isOptional": false,
+    //           "isMultiple": false,
+    //           "isExtended": false
+    //         },
+    //         {
+    //           "name": "SinceDate",
+    //           "valueType": "datetime",
+    //           "isOptional": true,
+    //           "isMultiple": false,
+    //           "isExtended": false
+    //         },
+    //         {
+    //           "name": "UntilDate",
+    //           "valueType": "datetime",
+    //           "isOptional": true,
+    //           "isMultiple": false,
+    //           "isExtended": false
+    //         }
+    //       ]
+    //     },
+    //     {
+    //       "name": "svn",
+    //       "isOptional": true,
+    //       "options": [
+    //         {
+    //           "name": "RevRanges",
+    //           "valueType": "str",
+    //           "isOptional": false,
+    //           "isMultiple": false,
+    //           "isExtended": false
+    //         },
+    //         {
+    //           "name": "SinceDate",
+    //           "valueType": "datetime",
+    //           "isOptional": true,
+    //           "isMultiple": false,
+    //           "isExtended": false
+    //         },
+    //         {
+    //           "name": "UntilDate",
+    //           "valueType": "datetime",
+    //           "isOptional": true,
+    //           "isMultiple": false,
+    //           "isExtended": false
+    //         }
+    //       ]
+    //     },
+    //     {
+    //       "name": "Issues",
+    //       "isOptional": false,
+    //       "options": [
+    //         {
+    //           "name": "IssueTracker",
+    //           "valueType": "SectionRef",
+    //           "isOptional": false,
+    //           "enumeration": [
+    //             "JIRA",
+    //             "Redmine",
+    //             "TFS"
+    //           ],
+    //           "isMultiple": false,
+    //           "isExtended": false
+    //         },
+    //         {
+    //           "name": "IssueURL",
+    //           "valueType": "str",
+    //           "isOptional": false,
+    //           "isMultiple": false,
+    //           "isExtended": false
+    //         },
+    //         {
+    //           "name": "CommitIssueFilter",
+    //           "valueType": "SectionRef",
+    //           "isOptional": false,
+    //           "sectionType": "issue-filter",
+    //           "isMultiple": true,
+    //           "isExtended": false
+    //         }
+    //       ]
+    //     },
+    //     {
+    //       "name": "JIRA",
+    //       "isOptional": true,
+    //       "options": [
+    //         {
+    //           "name": "JQLFilter",
+    //           "valueType": "str",
+    //           "isOptional": false,
+    //           "isMultiple": false,
+    //           "isExtended": false
+    //         }
+    //       ]
+    //     },
+    //     {
+    //       "isOptional": true,
+    //       "sectionType": "issue-filter",
+    //       "options": [
+    //         {
+    //           "name": "Pattern",
+    //           "valueType": "str",
+    //           "isOptional": false,
+    //           "isMultiple": false,
+    //           "isExtended": false
+    //         },
+    //         {
+    //           "name": "StartLine",
+    //           "valueType": "int",
+    //           "isOptional": false,
+    //           "isMultiple": false,
+    //           "isExtended": false,
+    //           "minValue": 5,
+    //           "maxValue": 30
+    //         },
+    //         {
+    //           "name": "EndLine",
+    //           "valueType": "int",
+    //           "isOptional": false,
+    //           "isMultiple": false,
+    //           "isExtended": false
+    //         },
+    //         {
+    //           "name": "AggregateIssueLinks",
+    //           "valueType": "str",
+    //           "isOptional": false,
+    //           "enumeration": [
+    //             "Is Part Of",
+    //             "Is Story Of"
+    //           ],
+    //           "isMultiple": false,
+    //           "isExtended": false
+    //         }
+    //       ]
+    //     },
+    //     {
+    //       "name": "Processing",
+    //       "isOptional": false,
+    //       "sectionGroup": "Advanced",
+    //       "options": [
+    //         {
+    //           "name": "DirectoryRenameDetectionTimeout",
+    //           "valueType": "int",
+    //           "isOptional": true,
+    //           "default": 30,
+    //           "isMultiple": false,
+    //           "isExtended": false
+    //         },
+    //         {
+    //           "name": "CompletionPeriod",
+    //           "valueType": "int",
+    //           "isOptional": false,
+    //           "isMultiple": false,
+    //           "isExtended": false
+    //         }
+    //       ]
+    //     },
+    //     {
+    //       "name": "Misc",
+    //       "isOptional": false,
+    //       "sectionGroup": "Advanced",
+    //       "options": [
+    //         {
+    //           "name": "Encoding",
+    //           "valueType": "str",
+    //           "isOptional": false,
+    //           "isMultiple": false,
+    //           "isExtended": false
+    //         }
+    //       ]
+    //     }
+    //   ]
+    // };
 
-    this.sections =  _.filter(this.detangleConfig.sections, function (o) { return o.name; });
-    this.schema = {};
-    this.schema.type = "object";
-    this.schema.properties = {};
-    console.log(this.detangleConfig);
-    _.forEach(this.sections, (section) => {
-      if (section.isOptional) { return; }
-      this.schema.properties[section.name] = {};
-      //this.schema.properties[section.name].type = "object";
-      _.map(section.options, (option) => {
-        return this.formatFieldData(this.schema.properties[section.name], option);
-      });
-    });
-    this.forms = [];
-    _.forEach(_.groupBy(this.sections, 'sectionGroup'),(sectionGroup, key) => {
-      if (key === 'undefined') {
-        _.forEach(sectionGroup, (sectionGroupItem) => {
-          if (!sectionGroupItem.name) { return; }
-          let tempFormList = [];
-          tempFormList.push(this.formatForm(sectionGroupItem, key));
-          this.forms.push(tempFormList);
-        });
-      }else {
-        let tempFormList = [];
-        _.forEach(sectionGroup, (sectionGroupItem) => {
-          tempFormList.push(this.formatForm(sectionGroupItem, key));
-        });
-        this.forms.push(tempFormList);
-      }
-    });
-    console.log(this.schema);
-    console.log(this.forms);
+
   }
 
-  initNewDatasourceModel() {
-    this.model = { Issues: {CommitIssueFilter: [{Pattern: "a"}, {Pattern: "b"}]}};
+  loadConfigurations() {
+    //this.model = { Issues: {CommitIssueFilter: [{Pattern: "a"}, {Pattern: "b"}]}};
+
+    this.backendSrv.get('http://192.168.1.106:8080/api/config/projects').then(configuration => {
+      console.log(configuration);
+      this.detangleConfig = configuration.declaration;
+      this.sections =  _.filter(this.detangleConfig.sections, function (o) { return o.name; });
+      this.schema = {};
+      this.schema.type = "object";
+      this.schema.properties = {};
+      console.log(this.detangleConfig);
+      _.forEach(this.sections, (section) => {
+        if (section.isOptional) { return; }
+        this.schema.properties[section.name] = {};
+        //this.schema.properties[section.name].type = "object";
+        _.map(section.options, (option) => {
+          return this.formatFieldData(this.schema.properties[section.name], option);
+        });
+      });
+      this.forms = [];
+      _.forEach(_.groupBy(this.sections, 'sectionGroup'),(sectionGroup, key) => {
+        if (key === 'undefined') {
+          _.forEach(sectionGroup, (sectionGroupItem) => {
+            if (!sectionGroupItem.name) { return; }
+            let tempFormList = [];
+            tempFormList.push(this.formatForm(sectionGroupItem, key));
+            this.forms.push(tempFormList);
+          });
+        }else {
+          let tempFormList = [];
+          console.log(sectionGroup);
+          _.forEach(sectionGroup, (sectionGroupItem) => {
+            tempFormList.push(this.formatForm(sectionGroupItem, key));
+          });
+          this.forms.push(tempFormList);
+        }
+      });
+      console.log(this.schema);
+      console.log(this.forms);
+
+    });
+  }
+
+  getProjectById(id) {
+    this.backendSrv.get('http://192.168.1.106:8080/api/config/projects/' + id).then(project => {
+      this.isNew = false;
+      let tempModel = project.config;
+      this.findSectionRefsWithMultiple(project.declaration.sections, tempModel);
+      console.log(tempModel);
+      this.model = tempModel;
+    });
+  }
+
+  findSectionRefsWithMultiple(sections, tempModel, key = '') {
+    _.forEach(sections, (section) => {
+
+      if (section.valueType === 'SectionRef' && section.isMultiple) {
+        let referenceKeys = _.get(tempModel,key + section.name);
+        _.forEach(referenceKeys, (value, index) => {
+          _.set(tempModel, key + section.name + '[' + index + ']', _.get(tempModel, value));
+          delete tempModel[value];
+        });
+      }
+      if (!_.isUndefined(section.options)) {
+        this.findSectionRefsWithMultiple(section.options, tempModel, section.name + '.');
+      }
+    });
   }
 
   formatFieldData(parent, fieldData) {
@@ -369,7 +411,8 @@ export class ProjectEditCtrl {
       parent.required = [];
     }
     if (!fieldData.isOptional) { parent.required.push(fieldData.name); }
-    if (fieldData.valueType === "str" || fieldData.valueType === "int" || fieldData.valueType === "datetime") {
+    if (fieldData.valueType === "str" || fieldData.valueType === "int" ||
+      fieldData.valueType === "float" || fieldData.valueType === "datetime") {
       parent.properties[fieldData.name] = { title: fieldData.name};
       if (fieldData.minValue) {
         parent.properties[fieldData.name].minimum = fieldData.minValue;
@@ -533,7 +576,24 @@ export class ProjectEditCtrl {
 
   saveChanges() {
     this.$scope.$broadcast('schemaFormValidate');
+    this.sectionizeModel(this.detangleConfig.sections);
     console.log(this.model);
+  }
+
+  sectionizeModel(sections, key = '') {
+    _.forEach(sections, (section) => {
+      if (section.valueType === 'SectionRef' && section.isMultiple) {
+        let referenceKeys = _.get(this.model, key + section.name);
+        _.forEach(referenceKeys, (value, index) => {
+          let sectionizedName = section.name + '.' + index;
+          this.model[sectionizedName] = value;
+          _.set(this.model, key + section.name + '[' + index + ']', sectionizedName);
+        });
+      }
+      if (!_.isUndefined(section.options)) {
+        this.sectionizeModel(section.options, section.name + '.');
+      }
+    });
   }
 
   exitValidation() {

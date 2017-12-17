@@ -2,10 +2,10 @@
 
 <div class="page-container">
 	<div class="page-header">
-		<h1>Data Sources</h1>
+		<h1>Projects</h1>
 		<a class="btn btn-success" href="projects/new">
 			<i class="fa fa-plus"></i>
-			Add Repo
+			Add Project
 		</a>
 	</div>
 
@@ -13,26 +13,20 @@
     <layout-selector></layout-selector>
 
 		<ol class="card-list" >
-			<li class="card-item-wrapper" ng-repeat="ds in ctrl.datasources">
-				<a class="card-item" href="datasources/edit/{{ds.id}}/">
+			<li class="card-item-wrapper" ng-repeat="project in ctrl.projects">
+				<a class="card-item" href="projects/edit/{{project}}/">
 					<div class="card-item-header">
 						<div class="card-item-type">
-							{{ds.type}}
+							{{project}}
 						</div>
 					</div>
 					<div class="card-item-body">
 						<figure class="card-item-figure">
-							<img ng-src="{{ds.typeLogoUrl}}">
+							<img ng-src="{{project}}">
 						</figure>
 						<div class="card-item-details">
 							<div class="card-item-name">
-								{{ds.name}}
-								<span ng-if="ds.isDefault">
-									<span class="btn btn-secondary btn-mini">default</span>
-								</span>
-							</div>
-							<div class="card-item-sub-name">
-								{{ds.url}}
+								{{project}}
 							</div>
 						</div>
 					</div>
@@ -41,7 +35,7 @@
 		</ol>
 	</section>
 
-	<div ng-if="ctrl.datasources.length === 0">
+	<div ng-if="ctrl.projects.length === 0">
 		<em>No projects defined</em>
 	</div>
 
