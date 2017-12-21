@@ -3,12 +3,12 @@
 import _ from 'lodash';
 
 import {coreModule} from 'app/core/core';
-import {values} from "d3-collection";
 
 const fieldHtmlClass = "gf-form-input max-width-20";
 const labelHtmlClass = "gf-form-label width-20";
 const formHtmlClass = "gf-form";
 const formGroupHtmlClass = "gf-form-group";
+const detangleServiceUrl = "http://192.168.1.106:8080";
 
 export class ProjectEditCtrl {
   isNew: boolean;
@@ -21,9 +21,9 @@ export class ProjectEditCtrl {
 
   /** @ngInject */
   constructor(private $scope,
-              //private _navModelSrv,
-              private backendSrv,
+              private $location,
               private $routeParams,
+              private backendSrv,
               private WizardHandler) {
 
     //this.navModel = _navModelSrv.getDatasourceNav(0);
@@ -338,7 +338,7 @@ export class ProjectEditCtrl {
   loadConfigurations() {
     //this.model = { Issues: {CommitIssueFilter: [{Pattern: "a"}, {Pattern: "b"}]}};
 
-    this.backendSrv.get('http://192.168.1.106:8080/api/config/projects').then(configuration => {
+    this.backendSrv.get(detangleServiceUrl + '/api/config/projects').then(configuration => {
       console.log(configuration);
       this.detangleConfig = configuration.declaration;
       this.sections =  _.filter(this.detangleConfig.sections, function (o) { return o.name; });
@@ -379,7 +379,7 @@ export class ProjectEditCtrl {
   }
 
   getProjectById(id) {
-    this.backendSrv.get('http://192.168.1.106:8080/api/config/projects/' + id).then(project => {
+    this.backendSrv.get(detangleServiceUrl + '/api/config/projects/' + id).then(project => {
       this.isNew = false;
       let tempModel = project.config;
       this.findSectionRefsWithMultiple(project.declaration.sections, tempModel);
@@ -465,6 +465,9 @@ export class ProjectEditCtrl {
         parent.properties[fieldData.name].items = {};
       _.map(tempSec.options, (option) => { return this.formatFieldData(parent.properties[fieldData.name].items, option);
       });
+    }else if (_.isArray(fieldData.valueType)) {
+      parent.properties[fieldData.name] = { title: fieldData.name};
+      parent.properties[fieldData.name].type = "string";
     }
   }
 
@@ -578,6 +581,16 @@ export class ProjectEditCtrl {
     this.$scope.$broadcast('schemaFormValidate');
     this.sectionizeModel(this.detangleConfig.sections);
     console.log(this.model);
+    if (this.$routeParams.id) {
+      return this.backendSrv.put(detangleServiceUrl + '/api/config/projects/' + this.$routeParams.id, this.model).then((result) => {
+        console.log(result);
+      });
+    } else {
+      return this.backendSrv.post(detangleServiceUrl + '/api/config/projects', this.model).then(result => {
+        console.log(result);
+        this.$location.path('projects/edit/' + result.config.project.name);
+      });
+    }
   }
 
   sectionizeModel(sections, key = '') {
@@ -585,6 +598,7 @@ export class ProjectEditCtrl {
       if (section.valueType === 'SectionRef' && section.isMultiple) {
         let referenceKeys = _.get(this.model, key + section.name);
         _.forEach(referenceKeys, (value, index) => {
+          console.log(value);
           let sectionizedName = section.name + '.' + index;
           this.model[sectionizedName] = value;
           _.set(this.model, key + section.name + '[' + index + ']', sectionizedName);

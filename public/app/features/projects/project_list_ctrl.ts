@@ -14,7 +14,7 @@ export class ProjectsCtrl {
 
     this.navModel = this.navModelSrv.getDatasourceNav(0);
 
-    backendSrv.get('http://192.168.1.106:8080/api/config/projects').then(result => {
+    this.backendSrv.get('http://192.168.1.106:8080/api/config/projects').then(result => {
       console.log(result);
       this.projects = result.projects;
     });
