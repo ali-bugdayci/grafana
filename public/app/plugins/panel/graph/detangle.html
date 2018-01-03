@@ -1,0 +1,29 @@
+<div class="editor-row">
+	<div class="section gf-form-group">
+    <h5 class="section-heading">Detangle</h5>
+    <gf-form-switch class="gf-form" label="Coupling" label-class="width-7" checked="ctrl.panel.detangle.coupling" on-change="ctrl.refresh()">
+    </gf-form-switch>
+    <div class="gf-form">
+      <label class="gf-form-label width-7">Limit</label>
+      <input type="number" class="gf-form-input max-width-8" ng-model="ctrl.panel.detangle.limit" placeholder="unlimited" ng-change="ctrl.refresh()" ng-model-onblur bs-tooltip="'Number of Issues on the graph'" data-placement="right">
+    </div>
+	</div>
+  <div class="section gf-form-group">
+    <h5 class="section-heading">Sort</h5>
+    <div class="gf-form">
+      <label class="gf-form-label width-6">Order</label>
+      <div class="gf-form-select-wrapper max-width-15">
+        <select class="gf-form-input" ng-model="ctrl.panel.detangle.sortingOrder" ng-options="item.value as item.text for item in ctrl.sortingOrder" ng-change="ctrl.refresh()"> </select>
+      </div>
+    </div>
+  </div>
+  <div class="section gf-form-group">
+    <h5 class="section-heading">Data</h5>
+    <div class="gf-form">
+      <label class="gf-form-label width-6">Metric</label>
+      <div class="gf-form-select-wrapper max-width-15">
+        <select class="gf-form-input" ng-model="ctrl.panel.detangle.metric" ng-options="item.value as item.text for item in ctrl.couplingMetrics" ng-change="ctrl.refresh()"> </select>
+      </div>
+    </div>
+  </div>
+</div>

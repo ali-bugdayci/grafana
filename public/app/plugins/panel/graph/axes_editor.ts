@@ -61,7 +61,19 @@ export class AxesEditorCtrl {
 
   xAxisModeChanged()  {
     this.panelCtrl.processor.setPanelDefaultsForNewXAxisMode();
-    this.panelCtrl.onDataReceived(this.panelCtrl.dataList);
+    /**
+     * @detangleEdit start
+     * @author Ural
+     */
+    if (this.panel.detangle.coupling) {
+      this.panelCtrl.refresh();
+    }else {
+      this.panelCtrl.onDataReceived(this.panelCtrl.dataList);
+    }
+    /**
+     * @detangleEdit end
+     * @author Ural
+     */
   }
 
   xAxisValueChanged() {
