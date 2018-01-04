@@ -1,6 +1,7 @@
 define([
   './panel_menu',
   './panel_directive',
+  './panel_container_directive',
   './solo_panel_ctrl',
   './query_ctrl',
   './panel_editor_tab',

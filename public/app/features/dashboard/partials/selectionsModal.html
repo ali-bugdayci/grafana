@@ -1,0 +1,49 @@
+<div class="modal-body" ng-controller="SelectionsModalCtrl as ctrl" >
+	<div class="modal-header">
+		<h2 class="modal-header-title">
+			Open Dashboard with Selections Filtered
+		</h2>
+
+		<a class="modal-header-close" ng-click="dismiss();">
+			<i class="fa fa-remove"></i>
+		</a>
+	</div>
+
+	<div class="modal-content">
+
+		<div class="gf-form-group">
+			<div class="gf-form" ng-repeat="(field,selectionList) in model.selections">
+				<span class="gf-form-label width-12">{{field}}</span>
+
+				<div>
+					<div style="margin-bottom: 1em;" ng-repeat="selection in selectionList">
+						<span>{{selection}}</span>
+						<a ng-click="ctrl.removeSelectionAt(selectionList, $index, model.selections, field)" class="btn btn-danger btn-small">
+							<i class="fa fa-remove"></i>
+						</a>
+						<br>
+					</div>
+				</div>
+			</div>
+
+			<div ng-if="ctrl.hasAnySelections()">
+				<div class="gf-form">
+					<span class="gf-form-label width-12">Select Dashboard</span>
+	
+					<select class="gf-form-input" ng-model="ctrl.selected_dashboard" ng-options="f.uri as f.title for f in ctrl.results"></select>
+				</div>
+
+				<div class="gf-form pull-right" style="margin-top: 20px;">
+					<button class="btn btn-inverse" ng-click="ctrl.openDashboard()" ng-disabled="!ctrl.selected_dashboard"><i class="fa fa-external-link"></i> Open</button>
+				</div>
+			</div>
+
+			<div class="alert alert-error" ng-if="!ctrl.hasAnySelections()">
+				No selections left.
+			</div>
+
+		</div>
+
+	</div>
+
+</div>

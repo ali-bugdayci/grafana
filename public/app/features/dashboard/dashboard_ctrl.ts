@@ -22,6 +22,7 @@ export class DashboardCtrl {
     contextSrv,
     playlistSrv,
     alertSrv,
+    dashboardFromSelectionsSrv,
     $timeout) {
 
       $scope.editor = { index: 0 };
@@ -44,6 +45,7 @@ export class DashboardCtrl {
         // init services
         timeSrv.init(dashboard);
         alertingSrv.init(dashboard, data.alerts);
+        dashboardFromSelectionsSrv.init();
 
         // template values service needs to initialize completely before
         // the rest of the dashboard can load
