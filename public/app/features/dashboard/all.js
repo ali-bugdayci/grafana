@@ -7,6 +7,7 @@ define([
   './submenu/submenu',
   './save_as_modal',
   './save_modal',
+  './selections_modal_ctrl',
   './shareModalCtrl',
   './shareSnapshotCtrl',
   './dashboard_srv',
@@ -23,4 +24,5 @@ define([
   './ad_hoc_filters',
   './row/row_ctrl',
   './repeat_option/repeat_option',
+  './dashboard_from_selections_srv',
 ], function () {});
