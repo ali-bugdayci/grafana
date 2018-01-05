@@ -465,9 +465,6 @@ export class ProjectEditCtrl {
         parent.properties[fieldData.name].items = {};
       _.map(tempSec.options, (option) => { return this.formatFieldData(parent.properties[fieldData.name].items, option);
       });
-    }else if (_.isArray(fieldData.valueType)) {
-      parent.properties[fieldData.name] = { title: fieldData.name};
-      parent.properties[fieldData.name].type = "string";
     }
   }
 
