@@ -8,5 +8,6 @@ define([
   './segment_srv',
   './backend_srv',
   './dynamic_directive_srv',
+  './detangle_srv'
 ],
 function () {});

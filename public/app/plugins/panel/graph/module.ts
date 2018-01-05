@@ -130,7 +130,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   };
 
   /** @ngInject */
-  constructor($scope, $injector, private annotationsSrv) {
+  constructor($scope, $injector, private annotationsSrv, private detangleSrv) {
     super($scope, $injector);
 
     _.defaults(this.panel, this.panelDefaults);
@@ -218,152 +218,8 @@ class GraphCtrl extends MetricsPanelCtrl {
      * @detangleEdit start
      * @author Ural
      */
-    // if (this.panel.coupling) {
-    //   let fileArray = _.uniq(_.map(dataList, (x) => { return x.props['@nodePath.keyword'];}));
-    //   let issueArray = _.uniq(_.map(dataList, (x) => { return x.props['@issue_id'];}));
-    //
-    //   let fileObjectArray = [];
-    //   _.each(fileArray, (file) => {
-    //     let tempFileObject = {
-    //       file: file,
-    //       issues: []
-    //     };
-    //     tempFileObject.issues = _.map(_.filter(dataList, (y) => { return y.props['@nodePath.keyword'] === file;}),
-    //       (x) => {
-    //         return { issueId: x.props['@issue_id'], value: x.datapoints[0][0], couplings: [] };
-    //       });
-    //     _.each(tempFileObject.issues, (issueSource) => {
-    //       _.each(tempFileObject.issues, (issueTarget) => {
-    //         if (issueSource.issueId !== issueTarget.issueId) {
-    //           let tempCoupling = {
-    //             issueId: issueTarget.issueId,
-    //             sourceSquare: Math.sqrt(issueSource.value),
-    //             targetSquare: Math.sqrt(issueTarget.value),
-    //             sourceTargetProduct: issueTarget.value * issueSource.value,
-    //             couplingValue: (issueTarget.value * issueSource.value) / (Math.sqrt(issueTarget.value) * Math.sqrt(issueSource.value))
-    //           };
-    //           issueSource.couplings.push(tempCoupling);
-    //         }
-    //       });
-    //     });
-    //     fileObjectArray.push(tempFileObject);
-    //
-    //   });
-    //   let issueObjectArray = [];
-    //   _.each(issueArray, (issue) => {
-    //     let tempIssueObject = {
-    //       issueId: issue,
-    //       couplingValue: 0,
-    //       couplings: []
-    //     };
-    //     let sourceSquare = 0;
-    //     let targetSquare = 0;
-    //     let sourceTargetProduct = 0;
-    //     _.each(_.filter(fileObjectArray, {issues: [{issueId: issue}]}), (fileWithIssue) => {
-    //       let issueWithValues = _.find(fileWithIssue.issues, {issueId: issue});
-    //       _.each(issueWithValues.couplings, (issuesCouples) => {
-    //         let tempIssueSourceTargetCoupling = _.find(tempIssueObject.couplings, {issueId: issuesCouples.issueId});
-    //         if (_.isUndefined(tempIssueSourceTargetCoupling)) {
-    //           tempIssueSourceTargetCoupling = {
-    //             issueId: issuesCouples.issueId,
-    //             sourceSquare: 0,
-    //             targetSquare: 0,
-    //             sourceTargetProduct: 0,
-    //           };
-    //           tempIssueObject.couplings.push(tempIssueSourceTargetCoupling);
-    //         }
-    //         tempIssueSourceTargetCoupling.sourceSquare += issuesCouples.sourceSquare;
-    //         tempIssueSourceTargetCoupling.targetSquare += issuesCouples.targetSquare;
-    //         tempIssueSourceTargetCoupling.sourceTargetProduct += issuesCouples.sourceTargetProduct;
-    //         sourceSquare += issuesCouples.sourceSquare;
-    //         targetSquare += issuesCouples.targetSquare;
-    //         sourceTargetProduct += issuesCouples.sourceTargetProduct;
-    //       });
-    //     });
-    //     _.map(tempIssueObject.couplings, (coupling) => {
-    //       coupling.couplingValue = coupling.sourceTargetProduct / ((coupling.sourceSquare * coupling.targetSquare) + 1);
-    //     });
-    //     tempIssueObject.couplingValue = sourceTargetProduct / ((sourceSquare * targetSquare) + 1);
-    //     issueObjectArray.push(tempIssueObject);
-    //   });
-    // }
-
     if (this.panel.detangle.coupling) {
-      console.log(dataList[0]);
-      let rows = dataList[0].rows;
-      let issueIdIndex = _.findIndex(dataList[0].columns, {text: '@issue_id'});
-      let filePathIndex = _.findIndex(dataList[0].columns, {text: '@nodePath.keyword'});
-      let timestampIndex = _.findIndex(dataList[0].columns, {text: '@timestamp'});
-      let valueIndex = dataList[0].columns.length - 1;
-
-      let issueArray = _.uniq(_.map(rows, (x) => { return x[issueIdIndex];}));
-      let issueObjectArray = [];
-      _.each(issueArray, (item) => {
-        let tempIssueObject = {
-          issueId: item,
-          couplingValue: 0,
-          timestamps: [],
-          couplings: []
-        };
-        issueObjectArray.push(tempIssueObject);
-      });
-      _.each(rows, (issue) => {
-        let tempIssueObject = _.find(issueObjectArray, {issueId: issue[issueIdIndex]});
-        tempIssueObject.timestamps.push(new Date(issue[timestampIndex]).getTime());
-        // let coupledIssues  = _.map (_.filter(rows, (row) => { return _.includes(_.uniq(_.map(_.filter(rows, (x) => {
-        //   return x[issueIdIndex] === issue[issueIdIndex] ;}), filePathIndex)),
-        //     row[filePathIndex]) && row[issueIdIndex] !== issue[issueIdIndex]; }),
-        //   issueIdIndex);
-        _.each(_.filter(rows, (x) => { return x[issueIdIndex] !== issue[issueIdIndex] &&
-          x[filePathIndex] === issue[filePathIndex]; }), (issueRow) => {
-          let tempCoupledIssue = {
-            issueId: issueRow[issueIdIndex],
-            couplingValue: 0,
-            sourceSquare: 0,
-            targetSquare: 0,
-            sourceTargetProduct: 0
-          };
-          tempCoupledIssue.sourceSquare += Math.sqrt(issue[valueIndex]);
-          tempCoupledIssue.targetSquare += Math.sqrt(issueRow[valueIndex]);
-          tempCoupledIssue.sourceTargetProduct += issue[valueIndex] * issueRow[valueIndex];
-          tempCoupledIssue.couplingValue = tempCoupledIssue.sourceTargetProduct /
-            ((tempCoupledIssue.sourceSquare * tempCoupledIssue.targetSquare) + 1);
-          tempIssueObject.couplings.push(tempCoupledIssue);
-        });
-        // tempIssueObject.couplingValue = _.sumBy(tempIssueObject.couplings, 'sourceTargetProduct') /
-        //   ((_.sumBy(tempIssueObject.couplings, 'sourceSquare') * _.sumBy(tempIssueObject.couplings, 'targetSquare')) + 1);
-        //issueObjectArray.push(tempIssueObject);
-      });
-      issueObjectArray = _.map(issueObjectArray, (issueObject) => {
-        return _.extend({}, issueObject, {
-          couplingValue: _.sumBy(issueObject.couplings, 'sourceTargetProduct') /
-             ((_.sumBy(issueObject.couplings, 'sourceSquare') * _.sumBy(issueObject.couplings, 'targetSquare')) + 1),
-          numOfIssues: issueObject.couplings.length
-        });
-      });
-      let metric = '';
-      switch (this.panel.detangle.metric) {
-        case 'couplecounts': {
-          metric = 'numOfIssues';
-          break;
-        }
-        case 'coupling':
-        default: {
-          metric = 'couplingValue';
-          break;
-        }
-      }
-      dataList = _.map(_.take(_.orderBy(_.filter(issueObjectArray, (o) => { return o.couplingValue >0; }),
-        metric, this.panel.detangle.sortingOrder),
-        (this.panel.detangle.limit === null ? issueObjectArray.length : this.panel.detangle.limit)), (issueObject) => {
-        return  {
-          metric: "sum",
-          props: { "@issue_id": issueObject.issueId},
-          target: issueObject.issueId,
-          field: "$metric",
-          datapoints: [ { 0: issueObject[metric], 1: issueObject.timestamps[0]}]
-        };
-      });
+      dataList = this.detangleSrv.dataConvertor(dataList, this.panel.detangle);
     }
     /**
      * @detangleEdit end
