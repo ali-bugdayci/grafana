@@ -22,6 +22,12 @@ export class DetangleSrv {
       checkIssueSourceType = true;
       issueTypeArray = _.split(config.sourceTypeData, ' + ');
     }
+    let checkIssueTargetType = false;
+    let targetIssueTypeArray = [];
+    if (issueTypeIndex > 0 && config.targetTypeData !== 'All') {
+      checkIssueTargetType = true;
+      targetIssueTypeArray = _.split(config.targetTypeData, ' + ');
+    }
     let issueArray = _.uniq(_.map(_.filter(rows, (o) => {
       return (checkIssueSourceType ? _.includes(issueTypeArray, o[issueTypeIndex]): true);
     }), (x) => { return x[issueIdIndex];}));
@@ -44,7 +50,8 @@ export class DetangleSrv {
       //     row[filePathIndex]) && row[issueIdIndex] !== issue[issueIdIndex]; }),
       //   issueIdIndex);
       _.each(_.filter(rows, (x) => { return x[issueIdIndex] !== issue[issueIdIndex] &&
-        x[filePathIndex] === issue[filePathIndex]; }), (issueRow) => {
+        x[filePathIndex] === issue[filePathIndex] && (checkIssueTargetType ?
+          _.includes(targetIssueTypeArray, x[issueTypeIndex]): true); }), (issueRow) => {
         let tempCoupledIssue = {
           issueId: issueRow[issueIdIndex],
           couplingValue: 0,
