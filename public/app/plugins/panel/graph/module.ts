@@ -93,7 +93,9 @@ class GraphCtrl extends MetricsPanelCtrl {
       limit: null,
       metric: 'coupling',
       sourceType: '$issue_type',
+      targetType: '$target_issue_type',
       sourceTypeData: '',
+      targetTypeData: '',
     },
     /**
      * @detangleEdit end
@@ -222,6 +224,8 @@ class GraphCtrl extends MetricsPanelCtrl {
      * @author Ural
      */
     this.panel.detangle.sourceTypeData = this.templateSrv.replaceWithText(this.panel.detangle.sourceType, this.panel.scopedVars);
+    this.panel.detangle.targetTypeData = this.templateSrv.replaceWithText(this.panel.detangle.targetType, this.panel.scopedVars);
+
     if (this.panel.detangle.coupling) {
       dataList = this.detangleSrv.dataConvertor(dataList, this.panel.detangle);
     }
