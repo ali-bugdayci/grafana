@@ -88,10 +88,12 @@ class GraphCtrl extends MetricsPanelCtrl {
      */
     // Detangle Options
     detangle: {
-      coupling      : false,
-      sortingOrder  : 'desc',
-      limit         : null,
-      metric        : 'coupling'
+      coupling: false,
+      sortingOrder: 'desc',
+      limit: null,
+      metric: 'coupling',
+      sourceType: '$issue_type',
+      sourceTypeData: '',
     },
     /**
      * @detangleEdit end
@@ -130,7 +132,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   };
 
   /** @ngInject */
-  constructor($scope, $injector, private annotationsSrv, private detangleSrv) {
+  constructor($scope, $injector, private annotationsSrv, private detangleSrv, templateSrv) {
     super($scope, $injector);
 
     _.defaults(this.panel, this.panelDefaults);
@@ -214,10 +216,12 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onDataReceived(dataList) {
+    console.log(this.templateSrv.replaceWithText(this.panel.detangle.sourceType, this.panel.scopedVars));
     /**
      * @detangleEdit start
      * @author Ural
      */
+    this.panel.detangle.sourceTypeData = this.templateSrv.replaceWithText(this.panel.detangle.sourceType, this.panel.scopedVars);
     if (this.panel.detangle.coupling) {
       dataList = this.detangleSrv.dataConvertor(dataList, this.panel.detangle);
     }

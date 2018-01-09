@@ -12,11 +12,19 @@ export class DetangleSrv {
   dataConvertor(dataList, config) {
     let rows = dataList[0].rows;
     let issueIdIndex = _.findIndex(dataList[0].columns, {text: '@issue_id'});
+    let issueTypeIndex = _.findIndex(dataList[0].columns, {text: '@issue_type'});
     let filePathIndex = _.findIndex(dataList[0].columns, {text: '@nodePath.keyword'});
     let timestampIndex = _.findIndex(dataList[0].columns, {text: '@timestamp'});
     let valueIndex = dataList[0].columns.length - 1;
-
-    let issueArray = _.uniq(_.map(rows, (x) => { return x[issueIdIndex];}));
+    let checkIssueSourceType = false;
+    let issueTypeArray = [];
+    if (issueTypeIndex > 0 && config.sourceTypeData !== 'All') {
+      checkIssueSourceType = true;
+      issueTypeArray = _.split(config.sourceTypeData, ' + ');
+    }
+    let issueArray = _.uniq(_.map(_.filter(rows, (o) => {
+      return (checkIssueSourceType ? _.includes(issueTypeArray, o[issueTypeIndex]): true);
+    }), (x) => { return x[issueIdIndex];}));
     let issueObjectArray = [];
     _.each(issueArray, (item) => {
       let tempIssueObject = {
@@ -29,6 +37,7 @@ export class DetangleSrv {
     });
     _.each(rows, (issue) => {
       let tempIssueObject = _.find(issueObjectArray, {issueId: issue[issueIdIndex]});
+      if (tempIssueObject === undefined) { return; }
       tempIssueObject.timestamps.push(new Date(issue[timestampIndex]).getTime());
       // let coupledIssues  = _.map (_.filter(rows, (row) => { return _.includes(_.uniq(_.map(_.filter(rows, (x) => {
       //   return x[issueIdIndex] === issue[issueIdIndex] ;}), filePathIndex)),
@@ -73,7 +82,10 @@ export class DetangleSrv {
         break;
       }
     }
-    dataList = _.map(_.take(_.orderBy(_.filter(issueObjectArray, (o) => { return o.couplingValue >0; }),
+
+    dataList = _.map(_.take(_.orderBy(_.filter(issueObjectArray, (o) => {
+      return o.couplingValue > 0;
+    }),
       metric, config.sortingOrder),
       (config.limit === null ? issueObjectArray.length : config.limit)), (issueObject) => {
       return  {
