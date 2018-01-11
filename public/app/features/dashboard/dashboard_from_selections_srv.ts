@@ -16,6 +16,16 @@ export class DashboardFromSelectionsSrv {
   }
 
   addSelection(key, newSelection) {
+    if (key === "@timestamp" || key === "$metric") {
+      appEvents.emit('alert-error', [ "Not applicable", "Timestamp or metric are not supported for filtering."]);
+      return;
+    }
+
+    var keyword = ".keyword";
+    if (key.endsWith(keyword)) {
+      var till = key.length - keyword.length ;
+      key = key.substr(0,till);
+    }
 
     if (!this.hash[key]) {
       this.hash[key] = [];
