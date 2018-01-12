@@ -4,6 +4,10 @@ import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 
+/**
+ * @detangleEdit
+ * @author Ali
+ */
 export class DashboardFromSelectionsSrv {
   hash: {};
 
