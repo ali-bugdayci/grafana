@@ -55,6 +55,17 @@ module.directive('panelContainer', function() {
       }
 
       function emit(field, value) {
+        var type = ctrl.panel.targets[0].metrics[0].type;
+
+        if (type === "percentiles") {
+          var percentileKey = /(.*?) p\d\d.*/;
+          var matches = value.match(percentileKey);
+
+          if (matches) {
+            value = matches[matches.length-1];
+          }
+        }
+
         appEvents.emit('add-selection', {
           field: field,
           value: value
