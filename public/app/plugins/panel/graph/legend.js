@@ -8,7 +8,7 @@ function (angular, _, $) {
 
   var module = angular.module('grafana.directives');
 
-  module.directive('graphLegend', function(popoverSrv, $timeout) {
+  module.directive('graphLegend', function(popoverSrv, $timeout, $rootScope) {
 
     return {
       link: function(scope, elem) {
@@ -63,6 +63,19 @@ function (angular, _, $) {
 
         function toggleSeries(e) {
           var el = $(e.currentTarget);
+
+          // @detangleEdit start
+          // @author Ali
+          if (e.shiftKey) {
+            $rootScope.appEvent('add-selection', {
+              field: panel.targets[0].bucketAggs[0].field,
+              value: el.text()
+            });
+            e.stopPropagation();
+            return;
+          }
+          // @detangleEdit end
+
           var index = getSeriesIndexForElement(el);
           var seriesInfo = seriesList[index];
           var scrollPosition = $($container.children('tbody')).scrollTop();

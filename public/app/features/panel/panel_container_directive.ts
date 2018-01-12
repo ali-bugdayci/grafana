@@ -8,7 +8,10 @@ import appEvents from 'app/core/app_events';
 var module = angular.module('grafana.directives');
 
 
-//Detangle
+/**
+ * @detangleEdit
+ * @author Ali
+ */
 module.directive('panelContainer', function() {
   return {
     restrict: 'C',
