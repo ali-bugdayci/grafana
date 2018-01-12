@@ -30,6 +30,11 @@ export class HelpCtrl {
         {keys: ['d', 'C'], description: 'Collapse all rows'},
         {keys: ['mod+o'], description: 'Toggle shared graph crosshair'},
       ],
+      'Mouse Clicks': [
+        {keys: ['click'], description: 'Labels: Show only clicked item'},
+        {keys: ['mod+click'], description: 'Labels: Hide/Display clicked item, Graph: Add Annotation'},
+        {keys: ['shift+click'], description: 'Add clicked item to Filtering Popup'},
+      ],
       'Focused Panel': [
         {keys: ['e'], description: 'Toggle panel edit view'},
         {keys: ['v'], description: 'Toggle panel fullscreen view'},
